@@ -17,7 +17,7 @@ async fn health_check_works() {
 
   // Act
   let response = client
-    .get(&format!("{}/health_check", address))
+    .get(&format!("{}/health_check", &address))
     .send()
     .await
     .expect("Failed to execute");
@@ -30,10 +30,11 @@ async fn health_check_works() {
 // No .await call, therefore no need for spawn_app to be async now.
 // We are also running tests so its not worth propagating errors:
 // If we fail to perform the proper setup we can just panic
-fn spawn_app()  -> String {
-  let listener = TcpListener::bind("127:0.0.1:0")
+fn spawn_app() -> String {
+  let listener = TcpListener::bind("127.0.0.1:0")
     .expect("Failed to bind to random port");
 
+  let port = listener.local_addr().unwrap().port();
   let server = zero2prod::run(listener).expect("failed to bind address");
 
   // Launch the server as a background task
@@ -43,7 +44,6 @@ fn spawn_app()  -> String {
   // New dev dependency - let's add tokio to the party with
   // `cargo add tokio --dev --vers 1`
   let _ = tokio::spawn(server);
-  let port = listener.local_addr().unwrap().port();
 
   format!("http://127.0.0.1:{}", port)
 }
